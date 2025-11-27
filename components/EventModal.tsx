@@ -31,6 +31,7 @@ export default function EventModal({ isOpen, onClose, selectedDate, events, onSa
     const [memo, setMemo] = useState('')
     const [type, setType] = useState<EventType>('other')
     const [loading, setLoading] = useState(false)
+    const [activeTab, setActiveTab] = useState<'list' | 'add'>(events.length > 0 ? 'list' : 'add')
 
     if (!isOpen) return null
 
@@ -87,111 +88,145 @@ export default function EventModal({ isOpen, onClose, selectedDate, events, onSa
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-            <div className="bg-white rounded-2xl w-full max-w-md overflow-hidden shadow-2xl scale-100 animate-in zoom-in-95 duration-200">
-                <div className="flex justify-between items-center p-5 border-b border-gray-100">
-                    <h3 className="font-bold text-xl text-gray-900">일정 관리</h3>
+            <div className="bg-white rounded-2xl w-full max-w-md overflow-hidden shadow-2xl scale-100 animate-in zoom-in-95 duration-200 max-h-[90vh] flex flex-col">
+                <div className="flex justify-between items-center p-5 border-b border-gray-100 shrink-0">
+                    <h3 className="font-bold text-xl text-gray-900">
+                        {format(selectedDate, 'M월 d일')} 일정
+                    </h3>
                     <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
                         <X size={20} className="text-gray-500" />
                     </button>
                 </div>
 
-                {events.length > 0 && (
-                    <div className="px-6 pt-4">
-                        <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">등록된 일정</h4>
-                        <div className="space-y-2 mb-6">
-                            {events.map(event => (
-                                <div key={event.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100 group hover:border-red-200 transition-colors">
-                                    <div className="flex items-center gap-3 overflow-hidden">
-                                        <div className={`w-2 h-2 rounded-full shrink-0 bg-gray-900`} />
-                                        <span className="font-medium text-sm text-gray-700 truncate">{event.title}</span>
-                                    </div>
+                {/* Tabs */}
+                <div className="flex border-b border-gray-100 shrink-0">
+                    <button
+                        onClick={() => setActiveTab('list')}
+                        className={`flex-1 py-3 text-sm font-bold transition-colors relative ${activeTab === 'list' ? 'text-gray-900' : 'text-gray-400 hover:text-gray-600'}`}
+                    >
+                        목록 ({events.length})
+                        {activeTab === 'list' && (
+                            <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gray-900" />
+                        )}
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('add')}
+                        className={`flex-1 py-3 text-sm font-bold transition-colors relative ${activeTab === 'add' ? 'text-gray-900' : 'text-gray-400 hover:text-gray-600'}`}
+                    >
+                        새 일정 등록
+                        {activeTab === 'add' && (
+                            <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gray-900" />
+                        )}
+                    </button>
+                </div>
+
+                <div className="overflow-y-auto p-0">
+                    {activeTab === 'list' ? (
+                        <div className="p-6 min-h-[300px]">
+                            {events.length > 0 ? (
+                                <div className="space-y-3">
+                                    {events.map(event => (
+                                        <div key={event.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-100 group hover:border-blue-200 transition-all">
+                                            <div className="flex items-center gap-3 overflow-hidden">
+                                                <div className={`w-2.5 h-2.5 rounded-full shrink-0 bg-gray-900`} />
+                                                <div className="flex flex-col overflow-hidden">
+                                                    <span className="font-bold text-gray-900 truncate">{event.title}</span>
+                                                    {event.description && (
+                                                        <span className="text-xs text-gray-500 truncate">{event.description}</span>
+                                                    )}
+                                                </div>
+                                            </div>
+                                            <button
+                                                onClick={() => handleDelete(event.id)}
+                                                className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors shrink-0"
+                                                title="삭제"
+                                            >
+                                                <Trash2 size={18} />
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className="h-full flex flex-col items-center justify-center text-gray-400 py-12">
+                                    <p>등록된 일정이 없습니다.</p>
                                     <button
-                                        onClick={() => handleDelete(event.id)}
-                                        className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                                        title="삭제"
+                                        onClick={() => setActiveTab('add')}
+                                        className="mt-4 text-blue-600 font-bold text-sm hover:underline"
                                     >
-                                        <Trash2 size={16} />
+                                        새 일정 등록하기
                                     </button>
                                 </div>
-                            ))}
+                            )}
                         </div>
-                        <div className="h-px bg-gray-100" />
-                    </div>
-                )}
+                    ) : (
+                        <form onSubmit={handleSubmit} className="p-6 space-y-5">
+                            <div>
+                                <label className="block text-sm font-semibold text-gray-700 mb-2">제목</label>
+                                <input
+                                    type="text"
+                                    required
+                                    value={title}
+                                    onChange={e => setTitle(e.target.value)}
+                                    className="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-black focus:border-transparent outline-none transition-all"
+                                    placeholder="일정 제목 입력"
+                                />
+                            </div>
 
-                <form onSubmit={handleSubmit} className="p-6 space-y-5">
-                    <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-2">날짜</label>
-                        <div className="p-3 bg-gray-50 rounded-xl border border-gray-200 text-gray-700 font-medium">
-                            {format(selectedDate, 'yyyy년 MM월 dd일')}
-                        </div>
-                    </div>
+                            <div>
+                                <label className="block text-sm font-semibold text-gray-700 mb-2">유형</label>
+                                <div className="grid grid-cols-2 gap-2">
+                                    {EVENT_TYPES.map((t) => (
+                                        <button
+                                            key={t.value}
+                                            type="button"
+                                            onClick={() => setType(t.value)}
+                                            className={`
+                            p-2 text-sm font-medium rounded-lg border transition-all text-left
+                            ${type === t.value
+                                                    ? 'bg-gray-900 text-white border-gray-900'
+                                                    : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'}
+                          `}
+                                        >
+                                            {t.label}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
 
-                    <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-2">제목</label>
-                        <input
-                            type="text"
-                            required
-                            value={title}
-                            onChange={e => setTitle(e.target.value)}
-                            className="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-black focus:border-transparent outline-none transition-all"
-                            placeholder="일정 제목 입력"
-                        />
-                    </div>
+                            <div>
+                                <label className="block text-sm font-semibold text-gray-700 mb-2">설명</label>
+                                <input
+                                    type="text"
+                                    value={description}
+                                    onChange={e => setDescription(e.target.value)}
+                                    className="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-black focus:border-transparent outline-none transition-all"
+                                    placeholder="간단한 설명"
+                                />
+                            </div>
 
-                    <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-2">유형</label>
-                        <div className="grid grid-cols-2 gap-2">
-                            {EVENT_TYPES.map((t) => (
-                                <button
-                                    key={t.value}
-                                    type="button"
-                                    onClick={() => setType(t.value)}
-                                    className={`
-                    p-2 text-sm font-medium rounded-lg border transition-all text-left
-                    ${type === t.value
-                                            ? 'bg-gray-900 text-white border-gray-900'
-                                            : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'}
-                  `}
-                                >
-                                    {t.label}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
+                            <div>
+                                <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+                                    <AlignLeft size={16} />
+                                    메모
+                                </label>
+                                <textarea
+                                    value={memo}
+                                    onChange={e => setMemo(e.target.value)}
+                                    className="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-black focus:border-transparent outline-none transition-all h-24 resize-none"
+                                    placeholder="상세한 메모를 남기세요..."
+                                />
+                            </div>
 
-                    <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-2">설명</label>
-                        <input
-                            type="text"
-                            value={description}
-                            onChange={e => setDescription(e.target.value)}
-                            className="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-black focus:border-transparent outline-none transition-all"
-                            placeholder="간단한 설명"
-                        />
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
-                            <AlignLeft size={16} />
-                            메모
-                        </label>
-                        <textarea
-                            value={memo}
-                            onChange={e => setMemo(e.target.value)}
-                            className="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-black focus:border-transparent outline-none transition-all h-24 resize-none"
-                            placeholder="상세한 메모를 남기세요..."
-                        />
-                    </div>
-
-                    <button
-                        type="submit"
-                        disabled={loading}
-                        className="w-full py-4 bg-gradient-to-r from-gray-900 to-gray-800 text-white rounded-xl font-bold text-lg hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:hover:scale-100"
-                    >
-                        {loading ? '저장 중...' : '저장하기'}
-                    </button>
-                </form>
+                            <button
+                                type="submit"
+                                disabled={loading}
+                                className="w-full py-4 bg-gradient-to-r from-gray-900 to-gray-800 text-white rounded-xl font-bold text-lg hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:hover:scale-100"
+                            >
+                                {loading ? '저장 중...' : '저장하기'}
+                            </button>
+                        </form>
+                    )}
+                </div>
             </div>
         </div>
     )
