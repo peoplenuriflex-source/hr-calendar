@@ -117,13 +117,7 @@ export default function Sidebar() {
 
                 {isDesktopOpen && (
                     <div className="absolute bottom-8 left-0 right-0 px-8">
-                        <div className="bg-blue-50 p-4 rounded-2xl">
-                            <h4 className="font-bold text-blue-900 mb-1">팀 공지사항</h4>
-                            <p className="text-sm text-blue-700 leading-relaxed">
-                                이번 달 급여일은 25일입니다.<br />
-                                잊지 말고 확인하세요!
-                            </p>
-                        </div>
+                        {/* Team Notice removed */}
                     </div>
                 )}
             </motion.div>

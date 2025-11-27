@@ -2,14 +2,15 @@
 
 import { useState } from 'react'
 import { format } from 'date-fns'
-import { X, AlignLeft } from 'lucide-react'
+import { X, AlignLeft, Trash2 } from 'lucide-react'
 import { supabase } from '@/utils/supabase/client'
-import { EventType } from './CalendarView'
+import { EventType, Event } from './CalendarView'
 
 type Props = {
     isOpen: boolean
     onClose: () => void
     selectedDate: Date
+    events: Event[]
     onSave: () => void
 }
 
@@ -24,7 +25,7 @@ const EVENT_TYPES: { value: EventType; label: string }[] = [
     { value: 'other', label: '⚪ 기타' },
 ]
 
-export default function EventModal({ isOpen, onClose, selectedDate, onSave }: Props) {
+export default function EventModal({ isOpen, onClose, selectedDate, events, onSave }: Props) {
     const [title, setTitle] = useState('')
     const [description, setDescription] = useState('')
     const [memo, setMemo] = useState('')
@@ -66,16 +67,57 @@ export default function EventModal({ isOpen, onClose, selectedDate, onSave }: Pr
             setLoading(false)
         }
     }
+    const handleDelete = async (id: string) => {
+        if (!confirm('정말 삭제하시겠습니까?')) return
+
+        try {
+            const { error } = await supabase
+                .from('events')
+                .delete()
+                .eq('id', id)
+
+            if (error) throw error
+
+            onSave() // Refresh events
+        } catch (error) {
+            console.error('Error deleting event:', error)
+            alert('삭제 중 오류가 발생했습니다.')
+        }
+    }
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 animate-in fade-in duration-200">
             <div className="bg-white rounded-2xl w-full max-w-md overflow-hidden shadow-2xl scale-100 animate-in zoom-in-95 duration-200">
                 <div className="flex justify-between items-center p-5 border-b border-gray-100">
-                    <h3 className="font-bold text-xl text-gray-900">일정 추가</h3>
+                    <h3 className="font-bold text-xl text-gray-900">일정 관리</h3>
                     <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
                         <X size={20} className="text-gray-500" />
                     </button>
                 </div>
+
+                {events.length > 0 && (
+                    <div className="px-6 pt-4">
+                        <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">등록된 일정</h4>
+                        <div className="space-y-2 mb-6">
+                            {events.map(event => (
+                                <div key={event.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100 group hover:border-red-200 transition-colors">
+                                    <div className="flex items-center gap-3 overflow-hidden">
+                                        <div className={`w-2 h-2 rounded-full shrink-0 bg-gray-900`} />
+                                        <span className="font-medium text-sm text-gray-700 truncate">{event.title}</span>
+                                    </div>
+                                    <button
+                                        onClick={() => handleDelete(event.id)}
+                                        className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                                        title="삭제"
+                                    >
+                                        <Trash2 size={16} />
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+                        <div className="h-px bg-gray-100" />
+                    </div>
+                )}
 
                 <form onSubmit={handleSubmit} className="p-6 space-y-5">
                     <div>

@@ -278,6 +278,7 @@ export default function CalendarView() {
                     isOpen={isModalOpen}
                     onClose={() => setIsModalOpen(false)}
                     selectedDate={selectedDate}
+                    events={getEventsForDay(selectedDate)}
                     onSave={() => {
                         fetchEvents()
                         setIsModalOpen(false)
